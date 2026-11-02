@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor de Alarmes · Frota Dahua</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef3fb; --card:#fff; --ink:#0d1b3a; --muted:#6a7896; --line:#e2e8f4; --soft:#f5f8fe;
+  --blue:#1d4ed8; --blue2:#3b82f6; --navy:#091a45; --blue-l:#e6eeff;
+  --orange:#ff7a1a; --orange-d:#e85d04; --orange-l:#fff0e3;
+  --green:#12a150; --green-l:#e3f6ea; --red:#e5484d;
+  --sh:0 1px 2px rgba(13,27,58,.04),0 10px 30px rgba(13,27,58,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#070f24;--card:#101b38;--ink:#e9efff;--muted:#8b9bc2;--line:#1f2d52;--soft:#0b1530;--blue-l:#16295e;--orange-l:#3b2210;--green-l:#0f3020;--sh:none}
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--sh);border:1px solid var(--line)}
+
+/* ---------- HERO ---------- */
+header{position:relative;overflow:hidden;padding:34px 48px 110px;color:#fff;
+  background:radial-gradient(900px 400px at 90% -20%,rgba(255,122,26,.55),transparent 60%),
+             radial-gradient(700px 400px at 0% 120%,rgba(59,130,246,.55),transparent 60%),
+             linear-gradient(135deg,#071438,#0f2f86 60%,#1d4ed8)}
+header::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(#000,transparent)}
+.hero{position:relative;max-width:1320px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:16px}
+.logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#ff9a4d,#ff6a00);display:grid;place-items:center;font-size:26px;box-shadow:0 10px 28px rgba(255,106,0,.55)}
+h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+.sub{font-size:14px;opacity:.78;margin-top:3px}
+.pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);padding:9px 18px;border-radius:99px;font-size:13px;font-weight:700}
+.pill b{color:#ffb780}
+
+main{max-width:1320px;margin:-72px auto 70px;padding:0 28px;position:relative;z-index:2}
+
+/* ---------- UPLOAD ---------- */
+.uploads{display:grid;grid-template-columns:1fr 1fr auto;gap:16px;padding:18px}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:18px 20px;display:flex;gap:16px;align-items:center;cursor:pointer;transition:.2s;background:var(--soft)}
+.drop:hover,.drop.over{border-color:var(--blue2);background:var(--blue-l);transform:translateY(-2px)}
+.drop.ok{border:2px solid var(--green);background:var(--green-l)}
+.drop .ic{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;display:grid;place-items:center;font-size:23px;flex:none;box-shadow:0 8px 18px rgba(29,78,216,.3)}
+.drop.ok .ic{background:linear-gradient(135deg,#34d27b,var(--green));box-shadow:0 8px 18px rgba(18,161,80,.3)}
+.drop b{font-size:15px;display:block;margin-bottom:2px}
+.drop span{font-size:12.5px;color:var(--muted);word-break:break-all}
+.drop input{display:none}
+.go{background:linear-gradient(135deg,#ff9a4d,var(--orange-d));color:#fff;border:0;border-radius:16px;padding:0 36px;font:800 16px 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s;box-shadow:0 12px 26px rgba(255,106,0,.4)}
+.go:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 30px rgba(255,106,0,.5)}
+.go:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.err{margin:0 18px 18px;padding:13px 18px;background:#fee2e2;color:#b91c1c;border-radius:12px;font-size:13px;font-weight:600}
+
+/* ---------- KPIs ---------- */
+#app{display:none;margin-top:24px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.kpi{padding:22px;display:flex;gap:16px;align-items:center;transition:.2s}
+.kpi:hover{transform:translateY(-3px)}
+.kic{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:25px;flex:none}
+.kpi.b .kic{background:var(--blue-l)}.kpi.o .kic{background:var(--orange-l)}.kpi.g .kic{background:var(--green-l)}
+.kpi small{color:var(--muted);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.8px}
+.kpi .n{font-size:36px;font-weight:800;letter-spacing:-1.5px;line-height:1.1}
+.kpi.b .n{color:var(--blue)}.kpi.o .n{color:var(--orange-d)}.kpi.g .n{color:var(--green)}
+.kpi .s{font-size:12px;color:var(--muted);font-weight:500}
+.warn{margin-top:18px;padding:13px 18px;background:var(--orange-l);color:#b4510a;border-radius:14px;font-size:13.5px;font-weight:600;border:1px solid rgba(255,122,26,.25)}
+@media (prefers-color-scheme: dark){.warn{color:#ffb780}}
+
+/* ---------- VISÃO GERAL ---------- */
+.overview{display:grid;grid-template-columns:320px 1fr;gap:18px;margin-top:18px}
+.box{padding:22px}
+.box h3{font-size:15px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.box h3 small{font-weight:600;color:var(--muted);font-size:12px}
+.donut{display:flex;align-items:center;gap:20px}
+.donut svg{width:140px;height:140px;flex:none;transform:rotate(-90deg)}
+.donut .ctr{position:absolute}
+.dwrap{position:relative;width:140px;height:140px;flex:none}
+.dwrap .ctr{inset:0;display:grid;place-items:center;text-align:center;font-weight:800;font-size:26px;line-height:1}
+.dwrap .ctr small{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:3px}
+.leg{display:flex;flex-direction:column;gap:12px;font-size:13px;font-weight:600}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:8px}
+.leg span{display:block;font-size:11.5px;color:var(--muted);font-weight:500;margin-left:19px}
+.tl{display:flex;align-items:flex-end;gap:7px;height:150px;padding-top:10px}
+.tl .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.tl .bar{width:100%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,var(--orange),#ffb780);min-height:3px;transition:.3s;position:relative}
+.tl .col:hover .bar{filter:brightness(1.08);transform:scaleY(1.03);transform-origin:bottom}
+.tl .v{font-size:10.5px;font-weight:700;color:var(--muted)}
+.tl .d{font-size:10.5px;color:var(--muted);font-weight:600}
+
+/* ---------- FILTROS ---------- */
+.toolbar{margin-top:18px;padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.lbl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;width:92px;flex:none}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);padding:8px 15px;border-radius:99px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.15s}
+.chip:hover{border-color:var(--blue2);transform:translateY(-1px)}
+.chip.on{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-color:transparent;box-shadow:0 6px 14px rgba(29,78,216,.28)}
+.chip.t.on{background:linear-gradient(135deg,#ff9a4d,var(--orange-d));box-shadow:0 6px 14px rgba(255,106,0,.3)}
+.chip .c{opacity:.7;margin-left:7px;font-weight:700;font-size:12px}
+.mini{font-size:12px;font-weight:700;color:var(--blue2);background:none;border:0;cursor:pointer;padding:6px}
+.search{flex:1;min-width:220px;padding:12px 18px;border-radius:14px;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);font:500 14px 'Plus Jakarta Sans',sans-serif;outline:none;transition:.2s}
+.search:focus{border-color:var(--blue2);background:var(--card)}
+.exp{background:var(--navy);color:#fff;border:0;border-radius:14px;padding:12px 20px;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:.2s}
+.exp:hover{background:var(--blue)}
+
+/* ---------- LISTAS ---------- */
+.cols{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-top:18px;align-items:start}
+.panel{padding:24px}
+.panel h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.bd{font-size:12.5px;padding:4px 12px;border-radius:99px;background:var(--orange-l);color:var(--orange-d);font-weight:800}
+.ok .bd{background:var(--green-l);color:var(--green)}
+.list{display:flex;flex-direction:column;gap:10px;max-height:720px;overflow:auto;padding-right:6px}
+.list::-webkit-scrollbar{width:7px}.list::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+.car{flex:none;min-width:0;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;transition:.18s;background:var(--card);position:relative;overflow:hidden}
+.car:hover{border-color:var(--orange);box-shadow:0 8px 22px rgba(255,122,26,.14);transform:translateY(-2px)}
+.rk{width:26px;font-size:12px;font-weight:800;color:var(--muted);text-align:center}
+.pf{font-weight:800;font-size:17px;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;padding:9px 13px;border-radius:12px;min-width:78px;text-align:center;letter-spacing:.3px}
+.car .g{font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:7px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{background:var(--orange-l);color:#b4510a;font-size:12px;font-weight:600;padding:4px 10px;border-radius:9px}
+.tag b{font-weight:800;color:var(--orange-d);margin-right:4px}
+@media (prefers-color-scheme: dark){.tag{color:#ffb780}}
+.tot{text-align:center;min-width:62px}
+.tot .n{font-size:28px;font-weight:800;line-height:1}
+.tot small{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.sev{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--blue2),var(--orange))}
+.sv-h .n{color:var(--red)}.sv-m .n{color:var(--orange-d)}.sv-l .n{color:var(--blue)}
+.car.clean{grid-template-columns:auto 1fr auto}
+.ok .car:hover{border-color:var(--green);box-shadow:0 8px 22px rgba(18,161,80,.14)}
+.ok .pf{background:linear-gradient(135deg,#34d27b,var(--green))}
+.fw{font-size:11.5px;color:var(--muted);font-weight:500}
+.okb{font-size:20px}
+.empty{color:var(--muted);text-align:center;padding:40px;font-size:14px;font-weight:600}
+
+
+.list.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;align-content:start}
+.tile{border:1.5px solid var(--line);border-radius:16px;padding:14px 12px;text-align:center;background:var(--card);transition:.18s}
+.tile:hover{border-color:var(--green);box-shadow:0 8px 22px rgba(18,161,80,.14);transform:translateY(-2px)}
+.tile .pf{display:block;min-width:0;font-size:18px;margin-bottom:9px}
+.tile .g{font-size:11.5px;color:var(--muted);font-weight:600;margin:0}
+.tile .fw{margin-top:3px}
+
+/* ---------- EXTRAS ---------- */
+.extra{margin-top:18px;padding:20px 24px}
+.extra summary{cursor:pointer;font-weight:800;font-size:15px}
+.bars{margin-top:18px;display:flex;flex-direction:column;gap:12px}
+.br{display:grid;grid-template-columns:270px 1fr 54px;gap:14px;align-items:center;font-size:13px;font-weight:600}
+.br .tr{height:12px;background:var(--soft);border-radius:9px;overflow:hidden}
+.br .tr i{display:block;height:100%;background:linear-gradient(90deg,var(--blue2),var(--orange));border-radius:9px}
+.br span:last-child{text-align:right;color:var(--orange-d);font-weight:800}
+
+@media(max-width:1000px){.uploads,.kpis,.cols,.overview{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}header{padding:26px 20px 100px}.br{grid-template-columns:130px 1fr 44px}.lbl{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div class="brand">
+      <div class="logo">📡</div>
+      <div><h1>Monitor de Alarmes · Frota Dahua</h1><div class="sub">Quem alarmou e quem ficou limpo — análise de 14 dias</div></div>
+    </div>
+    <div class="pill" id="heroPill">Aguardando planilhas…</div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="uploads">
+      <label class="drop" id="d1"><div class="ic">🚌</div><div><b>1 · Carros com equipamento</b><span id="n1">Arraste ou clique — Carros_Dahua…xlsx</span></div><input type="file" id="f1" accept=".xlsx,.xls"></label>
+      <label class="drop" id="d2"><div class="ic">🚨</div><div><b>2 · Alarmes (14 dias)</b><span id="n2">Arraste ou clique — AlarmeSegurançaAtiva…xlsx</span></div><input type="file" id="f2" accept=".xlsx,.xls"></label>
+      <button class="go" id="go" disabled>Analisar →</button>
+    </div>
+    <div class="err" id="err" style="display:none"></div>
+  </section>
+
+  <div id="app">
+    <div class="kpis">
+      <div class="card kpi b"><div class="kic">🚌</div><div><small>Carros com equipamento</small><div class="n" id="k1">0</div><div class="s" id="k1s"></div></div></div>
+      <div class="card kpi o"><div class="kic">⚠️</div><div><small>Com alarmes</small><div class="n" id="k2">0</div><div class="s" id="k2s"></div></div></div>
+      <div class="card kpi g"><div class="kic">✅</div><div><small>Sem alarmes</small><div class="n" id="k3">0</div><div class="s" id="k3s"></div></div></div>
+      <div class="card kpi b"><div class="kic">🔔</div><div><small>Total de alarmes</small><div class="n" id="k4">0</div><div class="s" id="k4s"></div></div></div>
+    </div>
+    <div class="warn" id="warn" style="display:none"></div>
+
+    <div class="overview">
+      <section class="card box"><h3>Situação da frota <small id="dsub"></small></h3>
+        <div class="donut"><div class="dwrap"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="54" fill="none" stroke="var(--green)" stroke-width="18"/><circle id="arc" cx="70" cy="70" r="54" fill="none" stroke="var(--orange)" stroke-width="18" stroke-linecap="butt" stroke-dasharray="0 999"/></svg><div class="ctr"><div><span id="dpct">0%</span><small>com alarmes</small></div></div></div>
+        <div class="leg"><div><i style="background:var(--orange)"></i>Com alarmes<span id="lg1"></span></div><div><i style="background:var(--green)"></i>Sem alarmes<span id="lg2"></span></div></div></div>
+      </section>
+      <section class="card box"><h3>Alarmes por dia <small>respeita os filtros de tipo</small></h3><div class="tl" id="tl"></div></section>
+    </div>
+
+    <section class="card toolbar">
+      <div class="row"><span class="lbl">Grupo</span><span id="grupos" class="row"></span></div>
+      <div class="row"><span class="lbl">Tipo de alarme</span><span id="tipos" class="row"></span><button class="mini" id="allT">todos</button><button class="mini" id="noT">nenhum</button></div>
+      <div class="row"><input class="search" id="q" placeholder="🔎  Buscar prefixo (ex: 20076)"><button class="exp" id="exp">⬇ Exportar CSV</button></div>
+    </section>
+
+    <div class="cols">
+      <section class="card panel"><h2>⚠️ Carros com alarmes <span class="bd" id="b1">0</span></h2><div class="list" id="l1"></div></section>
+      <section class="card panel ok"><h2>✅ Sem alarmes nos 14 dias <span class="bd" id="b2">0</span></h2><div class="list grid" id="l2"></div></section>
+    </div>
+
+    <details class="card extra" id="foraBox" style="display:none">
+      <summary>❓ Alarmes de carros que não estão na lista de equipamentos (<span id="foraN"></span>)</summary>
+      <div class="list" id="fora" style="margin-top:14px;max-height:340px"></div>
+    </details>
+
+    <details class="card extra" open>
+      <summary>📊 Ranking por tipo de alarme</summary>
+      <div class="bars" id="bars"></div>
+    </details>
+  </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let files={}, D=null, st={grupo:'Todos',tipos:new Set(),q:''};
+
+[['d1','f1','n1','frota'],['d2','f2','n2','alarmes']].forEach(([d,f,n,k])=>{
+  const set=file=>{files[k]=file;$(n).textContent=file.name;$(d).classList.add('ok');$('go').disabled=!(files.frota&&files.alarmes)};
+  $(f).onchange=e=>e.target.files[0]&&set(e.target.files[0]);
+  $(d).ondragover=e=>{e.preventDefault();$(d).classList.add('over')};
+  $(d).ondragleave=()=>$(d).classList.remove('over');
+  $(d).ondrop=e=>{e.preventDefault();$(d).classList.remove('over');e.dataTransfer.files[0]&&set(e.dataTransfer.files[0])};
+});
+
+$('go').onclick=async()=>{
+  $('err').style.display='none';$('go').textContent='Lendo…';
+  const fd=new FormData();fd.append('frota',files.frota);fd.append('alarmes',files.alarmes);
+  try{
+    const r=await fetch('/api/analisar',{method:'POST',body:fd});const j=await r.json();
+    if(!r.ok)throw new Error(j.erro||'Falha');
+    D=j;st={grupo:'Todos',tipos:new Set(j.tipos),q:''};$('q').value='';
+    $('app').style.display='block';buildFilters();render();
+    $('app').scrollIntoView({behavior:'smooth'});
+  }catch(e){$('err').textContent=e.message;$('err').style.display='block'}
+  $('go').textContent='Analisar →';
+};
+
+const fmt=iso=>iso?new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nf=n=>n.toLocaleString('pt-BR');
+
+function buildFilters(){
+  const gs=['Todos',...new Set(D.frota.map(c=>c.grupo))];
+  $('grupos').innerHTML=gs.map(g=>`<button class="chip ${g===st.grupo?'on':''}" data-g="${esc(g)}">${esc(g)}<span class="c">${g==='Todos'?D.frota.length:D.frota.filter(c=>c.grupo===g).length}</span></button>`).join('');
+  $('grupos').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;st.grupo=b.dataset.g;buildFilters();render()};
+  const cnt={};Object.values(D.alarmes).forEach(a=>Object.entries(a.tipos).forEach(([t,n])=>cnt[t]=(cnt[t]||0)+n));
+  $('tipos').innerHTML=D.tipos.map(t=>`<button class="chip t ${st.tipos.has(t)?'on':''}" data-t="${esc(t)}">${esc(t)}<span class="c">${nf(cnt[t]||0)}</span></button>`).join('');
+  $('tipos').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const t=b.dataset.t;st.tipos.has(t)?st.tipos.delete(t):st.tipos.add(t);buildFilters();render()};
+}
+$('allT').onclick=()=>{st.tipos=new Set(D.tipos);buildFilters();render()};
+$('noT').onclick=()=>{st.tipos=new Set();buildFilters();render()};
+$('q').oninput=e=>{st.q=e.target.value.trim();render()};
+
+function calc(){
+  const inFleet=new Set(D.frota.map(c=>c.prefixo));
+  const cars=D.frota.filter(c=>(st.grupo==='Todos'||c.grupo===st.grupo)&&c.prefixo.includes(st.q));
+  const com=[],sem=[];
+  cars.forEach(c=>{
+    const a=D.alarmes[c.prefixo];let tipos={},tot=0;
+    if(a)Object.entries(a.tipos).forEach(([t,n])=>{if(st.tipos.has(t)){tipos[t]=n;tot+=n}});
+    (tot?com:sem).push({...c,tipos,tot,ultimo:a&&a.ultimo});
+  });
+  com.sort((a,b)=>b.tot-a.tot);
+  const fora=Object.entries(D.alarmes).filter(([p])=>!inFleet.has(p)&&p.includes(st.q)).map(([p,a])=>{
+    const tipos={};let tot=0;Object.entries(a.tipos).forEach(([t,n])=>{if(st.tipos.has(t)){tipos[t]=n;tot+=n}});
+    return {prefixo:p,tipos,tot,grupo:'Fora da lista',ultimo:a.ultimo}}).filter(x=>x.tot).sort((a,b)=>b.tot-a.tot);
+  return {cars,com,sem,fora};
+}
+
+function carHTML(c,i,mx){
+  const r=c.tot/mx,sv=r>.66?'sv-h':r>.25?'sv-m':'sv-l';
+  return `<div class="car"><div class="rk">${i+1}º</div><div style="display:flex;gap:14px;align-items:center;min-width:0"><div class="pf">${esc(c.prefixo)}</div><div><div class="g">${esc(c.grupo)}${c.ultimo?` · último: ${fmt(c.ultimo)}`:''}</div><div class="tags">${Object.entries(c.tipos).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span class="tag"><b>${n}×</b>${esc(t)}</span>`).join('')}</div></div></div><div class="tot ${sv}"><div class="n">${nf(c.tot)}</div><small>alarmes</small></div><div class="sev" style="width:${r*100}%"></div></div>`;
+}
+
+function render(){
+  const {cars,com,sem,fora}=calc();
+  const totAl=com.reduce((s,c)=>s+c.tot,0), mx=com[0]?com[0].tot:1;
+  const pc=cars.length?com.length/cars.length*100:0;
+  $('k1').textContent=cars.length;$('k1s').textContent=st.grupo==='Todos'?'todos os grupos':st.grupo;
+  $('k2').textContent=com.length;$('k2s').textContent=pc.toFixed(1)+'% da frota';
+  $('k3').textContent=sem.length;$('k3s').textContent=(100-pc).toFixed(1)+'% da frota';
+  $('k4').textContent=nf(totAl);$('k4s').textContent=com.length?'média '+(totAl/com.length).toFixed(1)+' por carro':'—';
+  $('b1').textContent=com.length;$('b2').textContent=sem.length;
+  $('heroPill').innerHTML=`<b>${nf(totAl)}</b> alarmes · <b>${com.length}</b> carros`;
+  // donut
+  const C=2*Math.PI*54;$('arc').setAttribute('stroke-dasharray',`${C*pc/100} ${C}`);
+  $('dpct').textContent=Math.round(pc)+'%';$('dsub').textContent=st.grupo;
+  $('lg1').textContent=`${com.length} carros`;$('lg2').textContent=`${sem.length} carros`;
+  // listas
+  $('l1').innerHTML=com.map((c,i)=>carHTML(c,i,mx)).join('')||'<div class="empty">Nenhum carro com alarmes nesse filtro 🎉</div>';
+  $('l2').innerHTML=sem.map(c=>`<div class="tile"><div class="pf">${esc(c.prefixo)}</div><div class="g">${esc(c.grupo)}</div>${c.fw?`<div class="fw">FW ${esc(c.fw)}</div>`:''}</div>`).join('')||'<div class="empty" style="grid-column:1/-1">Todos os carros alarmaram.</div>';
+  $('foraBox').style.display=fora.length?'block':'none';$('foraN').textContent=fora.length+' carros';
+  $('fora').innerHTML=fora.map((c,i)=>carHTML(c,i,fora[0].tot)).join('');
+  // aviso de período
+  if(D.periodo){
+    const dias=(new Date(D.periodo.fim)-new Date(D.periodo.inicio))/864e5;
+    $('warn').style.display='block';
+    $('warn').innerHTML=`📅 Período dos alarmes: <b>${fmt(D.periodo.inicio)}</b> até <b>${fmt(D.periodo.fim)}</b> (${dias.toFixed(1)} dias)`+(dias<13?' — ⚠️ menos de 14 dias de dados: carros "sem alarmes" podem só não ter tido tempo de alarmar.':'');
+  }
+  // linha do tempo por dia
+  const dias=Object.keys(D.dias||{}).sort(),vals=dias.map(d=>Object.entries(D.dias[d]).reduce((s,[t,n])=>s+(st.tipos.has(t)?n:0),0)),vm=Math.max(1,...vals);
+  $('tl').innerHTML=dias.map((d,i)=>`<div class="col" title="${d.split('-').reverse().join('/')}: ${vals[i]} alarmes"><span class="v">${nf(vals[i])}</span><div class="bar" style="height:${vals[i]/vm*100*0.72}%"></div><span class="d">${d.slice(8)}/${d.slice(5,7)}</span></div>`).join('')||'<div class="empty" style="width:100%">Sem datas</div>';
+  // ranking de tipos
+  const cnt={};com.forEach(c=>Object.entries(c.tipos).forEach(([t,n])=>cnt[t]=(cnt[t]||0)+n));
+  const arr=Object.entries(cnt).sort((a,b)=>b[1]-a[1]),m2=arr[0]?arr[0][1]:1;
+  $('bars').innerHTML=arr.map(([t,n])=>`<div class="br"><span>${esc(t)}</span><div class="tr"><i style="width:${n/m2*100}%"></i></div><span>${nf(n)}</span></div>`).join('')||'<div class="empty">Sem dados</div>';
+}
+
+$('exp').onclick=()=>{
+  const {com,sem}=calc();
+  const rows=[['Prefixo','Grupo','Situação','Total','Detalhe']];
+  com.forEach(c=>rows.push([c.prefixo,c.grupo,'Com alarmes',c.tot,Object.entries(c.tipos).map(([t,n])=>`${n}x ${t}`).join(' | ')]));
+  sem.forEach(c=>rows.push([c.prefixo,c.grupo,'Sem alarmes',0,'']));
+  const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='analise_alarmes_14_dias.csv';a.click();
+};
+</script>
+</body>
+</html>
